@@ -1,5 +1,5 @@
 import React from "react";
-import SideBar from "../components/SideBar/SideBAr";
+import SideBar from "../components/SideBar/SideBar";
 import MessageContainer from "../components/MessageContainer/MessageContainer";
 
 const Home = () => {
