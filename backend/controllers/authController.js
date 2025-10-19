@@ -3,9 +3,17 @@ import bcrypt from "bcryptjs";
 import User from "../models/authModel.js";
 import tokenCreation from "../utils/tokenCreation.js";
 
+
 export async function signup(req, res) {
   try {
     const { fullname, username, password, confirmPassword, gender } = req.body;
+
+    // Validation
+    if (!fullname || !username || !password || !confirmPassword || !gender) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Please fill all fields" });
+    }
 
     if (password !== confirmPassword) {
       return res
@@ -13,22 +21,22 @@ export async function signup(req, res) {
         .json({ success: false, message: "Passwords do not match" });
     }
 
-    const user = await User.findOne({ username });
-
-    if (user) {
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
       return res
         .status(400)
-        .json({ success: false, message: "username already exist" });
+        .json({ success: false, message: "Username already exists" });
     }
 
-    //HashPassword
+    // Hash password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    //avatars
+    // Avatar URLs
     const boyAvatar = `https://avatar.iran.liara.run/public/boy?username=${username}`;
     const girlAvatar = `https://avatar.iran.liara.run/public/girl?username=${username}`;
 
+    // Create user
     const newUser = new User({
       fullname,
       username,
@@ -37,51 +45,73 @@ export async function signup(req, res) {
       profilePicture: gender === "male" ? boyAvatar : girlAvatar,
     });
 
-    //token creation
+    await newUser.save();
+
+    // Create token + set cookie
     tokenCreation(newUser._id, res);
 
-    await newUser.save();
-    return res
-      .status(200)
-      .json({ success: true, message: "New user created successfully" });
+    // ✅ Return full user data (so frontend can save it in localStorage)
+    return res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      data: {
+        _id: newUser._id,
+        fullname: newUser.fullname,
+        username: newUser.username,
+        gender: newUser.gender,
+        profilePicture: newUser.profilePicture,
+      },
+    });
   } catch (error) {
-    console.log("Signup error", error);
+    console.error("Signup error:", error);
     return res
       .status(500)
-      .json({ success: false, message: "Signup error", error });
+      .json({ success: false, message: "Signup error", error: error.message });
   }
 }
+
 
 export async function login(req, res) {
   try {
     const { username, password } = req.body;
 
+    // 1) Find user
     const user = await User.findOne({ username });
-
     if (!user) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found!!" });
+      return res.status(400).json({ success: false, message: "User not found!" });
     }
 
+    // 2) Check password
     const isCorrectPassword = await bcrypt.compare(password, user.password);
-
     if (!isCorrectPassword) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Password is incorrect!!" });
+      return res.status(400).json({ success: false, message: "Incorrect password!" });
     }
 
-    tokenCreation(user._id, res);
+    // 3) Create token + cookie (if your util sets cookie, still OK to return the token)
+    const token = tokenCreation(user._id, res);
 
-    return res
-      .status(200)
-      .json({ success: true, message: "Login successfully" });
+    // 4) Return user payload consistent with signup
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token,
+      data: {
+        _id: user._id,
+        fullname: user.fullname,
+        username: user.username,
+        gender: user.gender,
+        email: user.email,              // include if you have it
+        profilePicture: user.profilePicture, // 👈 important
+      },
+    });
   } catch (error) {
-    console.log("Login Error", error);
-    return res.status(400).json({ success: false, message: "Login Error" });
+    console.error("Login Error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Server error during login" });
   }
 }
+
 
 export async function logout(req, res) {
   try {

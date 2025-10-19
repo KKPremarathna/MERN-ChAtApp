@@ -26,3 +26,48 @@ body {
 ::-webkit-scrollbar-thumb:hover {
 	background: #141418;
 }
+
+/* Custom Shake Animation for New Messages */
+.shake {
+  animation: shakeCustom 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Keyframes */
+@keyframes shakeCustom {
+  0% {
+    transform: scale(1) translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  10% {
+    transform: scale(1.02) translate3d(-2px, 0, 0);
+  }
+  20% {
+    transform: scale(1.02) translate3d(3px, 0, 0);
+  }
+  30% {
+    transform: scale(1.03) translate3d(-4px, 0, 0);
+  }
+  40% {
+    transform: scale(1.03) translate3d(4px, 0, 0);
+  }
+  50% {
+    transform: scale(1.02) translate3d(-3px, 0, 0);
+    opacity: 0.95;
+  }
+  60% {
+    transform: scale(1.02) translate3d(3px, 0, 0);
+  }
+  70% {
+    transform: scale(1.01) translate3d(-2px, 0, 0);
+  }
+  80% {
+    transform: scale(1.01) translate3d(2px, 0, 0);
+  }
+  100% {
+    transform: scale(1) translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}

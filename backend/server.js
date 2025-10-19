@@ -7,15 +7,19 @@ import messageRoute from "./routes/messageRoute.js";
 import userRouter from "./routes/userRoute.js";
 
 import connectDB from "./config/db.js";
+import cors from "cors";
+import {app,server} from "./socket/socket.js"
+
 
 dotenv.config();
-const app = express();
+
 
 const PORT = process.env.PORT || 5000;
 
 //middlewares
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 
 //routes
 app.get("/", (req, res) => {
@@ -26,7 +30,7 @@ app.use("/api/message", messageRoute);
 app.use("/api/user", userRouter);
 
 connectDB().then(() => {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`Server is running in port ${PORT}`);
   });
 });

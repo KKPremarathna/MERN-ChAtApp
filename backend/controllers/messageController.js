@@ -1,6 +1,7 @@
 import { populate } from "dotenv";
 import Conversation from "../models/conversationModel.js";
 import Message from "../models/messageModel.js";
+import { getReceiverSocketId,io } from "../socket/socket.js";
 
 export async function sendMessage(req, res) {
   try {
@@ -32,6 +33,13 @@ export async function sendMessage(req, res) {
 
     //PARELLELY SAVE BOTH
     await Promise.all([conversation.save(), newMessage.save()]);
+
+
+    //Socket 
+    const receiverSocketId = getReceiverSocketId(recieverId);
+		if (receiverSocketId) {
+			io.to(receiverSocketId).emit("newMessage", newMessage);
+		}
 
     res.status(200).json(newMessage);
   } catch (error) {
